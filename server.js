@@ -1,3 +1,5 @@
+const Joi = require("joi")
+const { application } = require("express")
 const express = require("express")
 const app = express()
 app.use(express.json())
@@ -32,17 +34,32 @@ const players = [
   },
 ]
 
-//CREATE
+//CREATE==============
 app.post("/api", (req, res) => {
-  const player = {
-    id: players.length + 1,
+  const schema = Joi.object({
+    name: Joi.string().min(3).max(15).required(),
+    img: Joi.required(),
+  })
+
+  const { error } = schema.validate({
     name: req.body.name,
+    img: req.body.img,
+  })
+
+  if (!error) {
+    const player = {
+      id: players.length + 1,
+      name: req.body.name,
+      img: req.body.img,
+    }
+    players.push(player)
+    res.send(player)
+    return
   }
-  players.push(player)
-  res.send(player)
+  res.send(error)
 })
 
-//READ
+//READ===================
 app.get("/", (req, res) => {
   res.send("Sample")
 })
@@ -57,8 +74,23 @@ app.get("/api/:id", (req, res) => {
   res.send(player)
 })
 
-//UPDATE
+//UPDATE========================
+app.put("/api/:id", (req, res) => {
+  const player = players.find((c) => c.id === parseInt(req.params.id))
+  if (!player) res.status(404).send("Not Found")
 
-//DESTROY
+  res.send(player)
+})
+
+// DELETE=====================
+app.delete("/api/:id", (req, res) => {
+  const player = players.find((c) => c.id === parseInt(req.params.id))
+  if (!player) res.status(404).send("Not Found")
+
+  const index = players.indexOf(player)
+  players.splice(index, 1)
+
+  res.send(player)
+})
 
 app.listen(port, () => console.log(`listening on port ${port}....`))
